@@ -11,4 +11,4 @@
     (send msg :value 6)
     (ros::publish "/mobile_base/commands/sound" msg)
     (ros::sleep))
-(exit)
+;;(exit)
