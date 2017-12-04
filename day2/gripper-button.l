@@ -7,7 +7,7 @@
 (load "package://daisya_euslisp_tutorials/euslisp/daisya-ik.l")
 (ik-demo0 :robot *dxl-armed-turtlebot*)
 
-(ros::roseus "gripper_bumper")
+(ros::roseus "gripper_button")
 
 (defun cb (msg)
   (cond
