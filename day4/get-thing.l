@@ -2,6 +2,8 @@
 
 (defun get-thing (msg cliff)
   (cond
+   ((or (null msg) (cliff))
+    nil)
    ((equal (send cliff :state) 1)
     nil)
    ((msg)
@@ -77,4 +79,3 @@
     nil)
    )
   )
-
