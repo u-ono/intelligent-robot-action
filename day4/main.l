@@ -14,11 +14,13 @@
 (load "hand-thing.l")
 (load "react-to-face.l")
 
-(setq *thing* nil)
-(setq *face-point* nil)
-(setq *hand* nil)
-(setq *cliff* nil)
+;;global variables
+(setq *thing* (instance jsk_recognition_msgs::BoundingBoxArray :init))
+(setq *face-point* (instance geometry_msgs::Point :init))
+(setq *hand* (instance jsk_recognition_msgs::BoundingBoxArray :init))
+(setq *cliff* (instance kobuki_msgs::CliffEvent :init))
 
+;;callback functions for each message
 (defun cb-0 (msg)
   (setq *thing* msg)
   )
@@ -48,31 +50,32 @@ state
 (defun main ()
   (case *state*
 	(0
-	 (print "state is 0~%")
+	 (print "state is 0")
 	 (if (get-thing *thing* *cliff*)
 	     (setq *state* 1)
 	   nil))
 	(1
-	 (print "state is 1~%")	 
+	 (print "state is 1")	 
 	 (if (react-to-face *face-point* *cliff*)
 	     (setq *state* 2)
 	   nil))
 	(2
-	 (print "state is 2~%")	 
+	 (print "state is 2")	 
 	 (if (hand-thing *hand*)
 	     (setq *state* 3)
 	   nil))
 	(3
-	 (print "state is 3~%")
+	 (print "state is 3")
 	 ;;TODO
 	 )
 	(4
+	 (print "all finished")
 	 (exit)
 	 )
 	)
   )
 
-;;(defvar *topic-thing* "/camera/depth_registered/boxesryokuball")
+;;topic
 (defvar *topic-thing* "/camera/depth_registered/boxeshoujicha")
 (defvar *topic-hand* "/camera/depth_registered/boxeshoujicha")
 (defvar *topic-face* "/face_point")
@@ -84,6 +87,7 @@ state
 
 (do-until-key
  (ros::spin-once)
- (unix::usleep 1000000)
+ (unix::usleep 10000)
  (main)
+ (unix::usleep 10000)
  )
