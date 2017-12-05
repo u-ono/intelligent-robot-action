@@ -1,0 +1,1 @@
+greenball.sh is not yet set at the perfect parameter I found yesterday. Please refer to an image file attached for the parameter and fix it. Thank you in advance.
