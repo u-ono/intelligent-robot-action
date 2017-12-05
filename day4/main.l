@@ -1,15 +1,23 @@
 #!/usr/bin/env roseus
 
 (ros::load-ros-manifest "kobuki_msgs")
+(ros::load-ros-manifest "geometry_msgs")
+(ros::load-ros-manifest "jsk_recognition_msgs")
 
 (ros::roseus "present")
 
-(load "package://dxl-armed-turtlebot/euslisp/dxl-armed-turtlebot-interface.l")
+(load "package://dxl_armed_turtlebot/euslisp/dxl-armed-turtlebot-interface.l")
 (dxl-armed-turtlebot-init)
 
 ;;load other files
 (load "get-thing.l")
 (load "hand-thing.l")
+(load "react-to-face.l")
+
+(setq *thing* nil)
+(setq *face-point* nil)
+(setq *hand* nil)
+(setq *cliff* nil)
 
 (defun cb-0 (msg)
   (setq *thing* msg)
@@ -64,15 +72,18 @@ state
 	)
   )
 
-(defvar *topic-thing* "/camera/depth_registered/boxesryokuball")
+;;(defvar *topic-thing* "/camera/depth_registered/boxesryokuball")
+(defvar *topic-thing* "/camera/depth_registered/boxeshoujicha")
 (defvar *topic-hand* "/camera/depth_registered/boxeshoujicha")
+(defvar *topic-face* "/face_point")
 
 (ros::subscribe "/mobie_base/events/cliff" kobuki_msgs::CliffEvent #'cb-cliff 1)
 (ros::subscribe *topic-thing* jsk_recognition_msgs::BoundingBoxArray #'cb-0 1)
+(ros::subscribe *topic-face* geometry_msgs::Point #'cb-1 1)
 (ros::subscribe *topic-hand* jsk_recognition_msgs::BoundingBoxArray #'cb-2 1)
-
 
 (do-until-key
  (ros::spin-once)
+ (unix::usleep 1000000)
  (main)
  )
