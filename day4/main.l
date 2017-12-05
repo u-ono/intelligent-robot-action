@@ -4,12 +4,19 @@
 
 (ros::roseus "present")
 
+(load "package://dxl-armed-turtlebot/euslisp/dxl-armed-turtlebot-interface.l")
+(dxl-armed-turtlebot-init)
+
 ;;load other files
 (load "get-thing.l")
 (load "hand-thing.l")
 
 (defun cb-0 (msg)
   (setq *thing* msg)
+  )
+
+(defun cb-1 (msg)
+  (setq *face-point* msg)
   )
 
 (defun cb-2 (msg)
@@ -33,17 +40,23 @@ state
 (defun main ()
   (case *state*
 	(0
-	 (if (get-thing *thing*)
+	 (print "state is 0~%")
+	 (if (get-thing *thing* *cliff*)
 	     (setq *state* 1)
 	   nil))
 	(1
-	 )
+	 (print "state is 1~%")	 
+	 (if (react-to-face *face-point* *cliff*)
+	     (setq *state* 2)
+	   nil))
 	(2
+	 (print "state is 2~%")	 
 	 (if (hand-thing *hand*)
 	     (setq *state* 3)
 	   nil))
-	 )
 	(3
+	 (print "state is 3~%")
+	 ;;TODO
 	 )
 	(4
 	 (exit)
@@ -51,12 +64,13 @@ state
 	)
   )
 
-(defvar *topic-thing* "/camera/depth_registered/cluster_decomposerryokuball/boxes")
-(defvar *topic-hand* "/camera/depth_registered/cluster_decomposerhoujicha/boxes")
+(defvar *topic-thing* "/camera/depth_registered/boxesryokuball")
+(defvar *topic-hand* "/camera/depth_registered/boxeshoujicha")
 
 (ros::subscribe "/mobie_base/events/cliff" kobuki_msgs::CliffEvent #'cb-cliff 1)
 (ros::subscribe *topic-thing* jsk_recognition_msgs::BoundingBoxArray #'cb-0 1)
 (ros::subscribe *topic-hand* jsk_recognition_msgs::BoundingBoxArray #'cb-2 1)
+
 
 (do-until-key
  (ros::spin-once)
