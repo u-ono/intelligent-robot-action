@@ -1,5 +1,4 @@
 #!/usr/bin/env roseus
-
 (ros::load-ros-manifest "kobuki_msgs")
 (ros::load-ros-manifest "geometry_msgs")
 (ros::load-ros-manifest "jsk_recognition_msgs")
@@ -13,12 +12,13 @@
 (load "get-thing.l")
 (load "hand-thing.l")
 (load "react-to-face.l")
+(load "shake-hand.l")
 
 ;;global variables
 (setq *thing* (instance jsk_recognition_msgs::BoundingBoxArray :init))
 (setq *face-point* (instance geometry_msgs::Point :init))
 (setq *hand* (instance jsk_recognition_msgs::BoundingBoxArray :init))
-(setq *cliff* (instance kobuki_msgs::CliffEvent :init))
+(setq *bumper* (instance kobuki_msgs::BumperEvent :init))
 
 ;;callback functions for each message
 (defun cb-0 (msg)
@@ -29,14 +29,11 @@
   (setq *face-point* msg)
   )
 
-(defun cb-2 (msg)
-  (setq *hand* msg)
+(defun cb-bumper (msg)
+  (setq *bumper* msg)
   )
 
-(defun cb-cliff (msg)
-  (setq *cliff* msg)
-  )
-
+;;initialize state
 (setq *state* 0)
 #|
 state
@@ -51,43 +48,51 @@ state
   (case *state*
 	(0
 	 (print "state is 0")
-	 (if (get-thing *thing* *cliff*)
+	 (if (get-thing *thing*)
 	     (setq *state* 1)
 	   nil))
 	(1
-	 (print "state is 1")	 
-	 (if (react-to-face *face-point* *cliff*)
+	 (print "state is 1")
+	 (if (react-to-face *face-point* *bumper*)
 	     (setq *state* 2)
 	   nil))
 	(2
 	 (print "state is 2")	 
-	 (if (hand-thing *hand*)
+	 (if (hand-thing)
 	     (setq *state* 3)
 	   nil))
 	(3
 	 (print "state is 3")
-	 ;;TODO
+	 (if (shake-hand)
+	     (setq *state* 4)
+	   nil)
 	 )
 	(4
 	 (print "all finished")
-	 (exit)
+	 )
+	(t
 	 )
 	)
   )
 
 ;;topic
-(defvar *topic-thing* "/camera/depth_registered/boxeshoujicha")
-(defvar *topic-hand* "/camera/depth_registered/boxeshoujicha")
+(defvar *topic-thing* "/camera/depth_registered/boxesryokuball")
 (defvar *topic-face* "/face_point")
+(defvar *topic-bumper* "/mobile_base/events/bumper")
 
-(ros::subscribe "/mobie_base/events/cliff" kobuki_msgs::CliffEvent #'cb-cliff 1)
-(ros::subscribe *topic-thing* jsk_recognition_msgs::BoundingBoxArray #'cb-0 1)
-(ros::subscribe *topic-face* geometry_msgs::Point #'cb-1 1)
-(ros::subscribe *topic-hand* jsk_recognition_msgs::BoundingBoxArray #'cb-2 1)
+;;subscribers
+(ros::subscribe *topic-bumper* kobuki_msgs::BumperEvent #'cb-bumper)
+(ros::subscribe *topic-thing* jsk_recognition_msgs::BoundingBoxArray #'cb-0)
+(ros::subscribe *topic-face* geometry_msgs::Point #'cb-1)
+
+;;initialize pose
+(send *dxl-armed-turtlebot* :tuckarm-pose3)
+(send *ri* :angle-vector (send *dxl-armed-turtlebot* :angle-vector))
+(send *ri* :wait-interpolation)
 
 (do-until-key
  (ros::spin-once)
- (unix::usleep 10000)
+ (unix::usleep 100000)
  (main)
- (unix::usleep 10000)
+ (unix::usleep 1000000)
  )
